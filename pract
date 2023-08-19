@@ -1,0 +1,151 @@
+
+
+PARQUEST FORMATE
+
+
+
+hive> create table sales_data_v2 ( p_type string, total_sales int ) row format delimited fields terminated by ',';
+OK
+Time taken: 0.181 seconds
+hive> load data local inpath 'file:///config/workspace/sales_data_raw.csv' into table sales_data_v2;
+Loading data to table hive_db.sales_data_v2
+OK
+Time taken: 1.57 seconds
+hive> select * from sales_data_v2;
+OK
+clothes 1000
+toys    2000
+clocks  3000
+Time taken: 0.51 seconds, Fetched: 3 row(s)
+hive> create table sales_data_pq_final
+    > (
+    > product_type string,
+    > total_sales int
+    > )
+    > stored as parquet;
+OK
+Time taken: 0.256 seconds
+hive> from sales_data_v2 insert overwrite table sales_data_pq_final select *;
+Query ID = abc_20230819192908_28166d32-1349-43ef-b491-f7951b0b3e96
+Total jobs = 3
+Launching Job 1 out of 3
+Number of reduce tasks determined at compile time: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1692452694842_0001, Tracking URL = http://165d78cac777:8088/proxy/application_1692452694842_0001/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1692452694842_0001
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-08-19 19:29:37,461 Stage-1 map = 0%,  reduce = 0%
+2023-08-19 19:29:55,655 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 29.25 sec
+2023-08-19 19:30:08,367 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 32.76 sec
+MapReduce Total cumulative CPU time: 32 seconds 760 msec
+Ended Job = job_1692452694842_0001
+Stage-4 is selected by condition resolver.
+Stage-3 is filtered out by condition resolver.
+Stage-5 is filtered out by condition resolver.
+Moving data to directory hdfs://localhost/user/hive/warehouse/hive_db.db/sales_data_pq_final/.hive-staging_hive_2023-08-19_19-29-08_307_2440230466627782333-1/-ext-10000
+Loading data to table hive_db.sales_data_pq_final
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 32.76 sec   HDFS Read: 14856 HDFS Write: 767 SUCCESS
+Total MapReduce CPU Time Spent: 32 seconds 760 msec
+OK
+Time taken: 64.84 seconds
+hive> 
+
+hive> select * from sales_data_pq_final;
+OK
+clothes 1000
+toys    2000
+clocks  3000
+Time taken: 0.413 seconds, Fetched: 3 row(s)
+hive> 
+
+
+
+
+
+ORC FORMAT
+
+
+
+
+
+
+
+
+
+
+
+
+
+create table sales_order_data_csv_v1 ( ORDERNUMBER int, QUANTITYORDERED int, PRICEEACH float, ORDERLINENUMBER int, SALES float, STATUS string, QTR_ID int, MONTH_ID int, YEAR_ID int, PRODUCTLINE string, MSRP int, PRODUCTCODE string, PHONE string, CITY string, STATE string, POSTALCODE string, COUNTRY string, TERRITORY string, CONTACTLASTNAME string, CONTACTFIRSTNAME string, DEALSIZE string ) row format delimited fields terminated by ',' tblproperties("skip.header.line.count"="1") ;
+
+load data local inpath 'file:///home/hadoop/sales_order_data.csv' into table sales_order_data_csv_v1;
+
+load sales_order_data.csv data into above mentioned tables
+create table sales_order_data_orc ( ORDERNUMBER int, QUANTITYORDERED int, PRICEEACH float, ORDERLINENUMBER int, SALES float, STATUS string, QTR_ID int, MONTH_ID int, YEAR_ID int, PRODUCTLINE string, MSRP int, PRODUCTCODE string, PHONE string, CITY string, STATE string, POSTALCODE string, COUNTRY string, TERRITORY string, CONTACTLASTNAME string, CONTACTFIRSTNAME string, DEALSIZE string ) stored as orc;
+
+from sales_order_data_csv_v1 insert overwrite table sales_order_data_orc select *;
+
+Run a query to check map-reduce activity
+select year_id, sum(sales) as total_sales from sales_order_data_orc group by year_id;
+--
+-
+-
+-
+--
+-
+-
+--
+-
+
+
+-
+-
+--
+
+-
+-
+--
+
+
+10337   42      97.16   5       4080.72 Shipped 4       11      2004    Ships   54      S72_3212        2125558493      NYC     NY      10022   USA     NA      Hernandez       Maria   Medium
+10350   20      100.0   15      2244.4  Shipped 4       12      2004    Ships   54      S72_3212        (91) 555 94 44  Madrid          28034   Spain   EMEA    Freyre  Diego   Small
+10373   29      100.0   1       3978.51 Shipped 1       1       2005    Ships   54      S72_3212        981-443655      Oulu            90110   Finland EMEA    Koskitalo       Pirkko  Medium
+10386   43      100.0   4       5417.57 Resolved        1       3       2005    Ships   54      S72_3212        (91) 555 94 44  Madrid          28034   Spain   EMEA    Freyre  Diego   Medium
+10397   34      62.24   1       2116.16 Shipped 1       3       2005    Ships   54      S72_3212        61.77.6555      Toulouse                31000   France  EMEA    Roulet  Annette Small
+10414   47      65.52   9       3079.44 On Hold 2       5       2005    Ships   54      S72_3212        6175559555      Boston  MA      51003   USA     NA      Yoshido Juri    Medium
+Time taken: 0.443 seconds, Fetched: 2823 row(s)
+hive> select year_id, sum(sales) as total_sales from sales_order_data_orc group by year_id;
+Query ID = abc_20230819200318_0ace29d9-7a81-48af-a0bd-cc2860cf8fa9
+Total jobs = 1
+Launching Job 1 out of 1
+Number of reduce tasks not specified. Estimated from input data size: 1
+In order to change the average load for a reducer (in bytes):
+  set hive.exec.reducers.bytes.per.reducer=<number>
+In order to limit the maximum number of reducers:
+  set hive.exec.reducers.max=<number>
+In order to set a constant number of reducers:
+  set mapreduce.job.reduces=<number>
+Starting Job = job_1692452694842_0003, Tracking URL = http://165d78cac777:8088/proxy/application_1692452694842_0003/
+Kill Command = /usr/local/hadoop/bin/mapred job  -kill job_1692452694842_0003
+Hadoop job information for Stage-1: number of mappers: 1; number of reducers: 1
+2023-08-19 20:03:41,097 Stage-1 map = 0%,  reduce = 0%
+2023-08-19 20:03:55,945 Stage-1 map = 100%,  reduce = 0%, Cumulative CPU 3.68 sec
+2023-08-19 20:04:08,599 Stage-1 map = 100%,  reduce = 100%, Cumulative CPU 7.04 sec
+MapReduce Total cumulative CPU time: 7 seconds 40 msec
+Ended Job = job_1692452694842_0003
+MapReduce Jobs Launched: 
+Stage-Stage-1: Map: 1  Reduce: 1   Cumulative CPU: 7.04 sec   HDFS Read: 44123 HDFS Write: 193 SUCCESS
+Total MapReduce CPU Time Spent: 7 seconds 40 msec
+OK
+2003    3516979.547241211
+2004    4724162.593383789
+2005    1791486.7086791992
+Time taken: 54.151 seconds, Fetched: 3 row(s)
+hive> 
+
